@@ -14,16 +14,62 @@ const bcryptPassword = (password: string) => {
     return hash;
 };
 
-const checkUser = (userEmail: string) => {
-        return knex("user").where("email", `${userEmail}`)
-        .then((res: any) => {
-            if (res.length !== 0)
-                return true;
-            return false;
+const formatUserAttributes = (user: any) => {
+    user.password = bcryptPassword(user.password);
+    user.created_at = moment().format();
+    user.last_login = moment().format();
+    user.user_id = uuid().replace(/-/g, "");
+    user.token = uuid();
+    return user;
+};
+
+const checkUserPassword = (credentials: any) => {
+    return new Promise((resolve, reject) => {
+        findUserByEmail(credentials.email)
+        .then((user) => {
+            return bcrypt.compare(credentials.password, user[0]["password"], (err, res) => {
+                if (err)
+                    reject(err);
+                resolve(res);
+            });
         })
-        .catch((err: any) => {
-            return err;
+        .catch((err) => {
+            reject(err);
         });
+    });
+};
+
+const findUserByEmail = (userEmail: string) => {
+    return knex("user").where("email", `${userEmail}`)
+    .then((res: any) => {
+        return res;
+    })
+    .catch((err: any) => {
+        return err;
+    });
+};
+
+const updateUserToken = (user: any) => {
+    const newToken = uuid();
+    return knex("user").where("email", `${user.email}`).update("token", newToken).returning(["user_id", "email", "token", "username", "first_name", "last_name", "phone"])
+    .then((res: any) => {
+        return res;
+    })
+    .catch((err: any) => {
+        return err;
+    });
+};
+
+const checkUser = (userEmail: string) => {
+    return knex("user").where("email", `${userEmail}`)
+    .then((res: any) => {
+        if (res.length !== 0)
+            return true;
+        return false;
+    })
+    .catch((err: any) => {
+        return err;
+    });
 };
 
 export const getUsers = (req: any, res: any) => {
@@ -37,15 +83,11 @@ export const getUsers = (req: any, res: any) => {
 };
 
 export const createUser = (req: any, res: any) => {
-    const user = req.body.user || req.body;
+    let user = req.body.user || req.body;
     checkUser(user.email)
     .then((userExist) => {
         if (!_.isNil(user) && !userExist) {
-            user.password = bcryptPassword(user.password);
-            user.created_at = moment().format();
-            user.last_login = moment().format();
-            user.user_id = uuid().replace(/-/g, "");
-            user.token = uuid();
+            user = formatUserAttributes(user);
             knex.insert(user).into("user").returning(["user_id", "email", "token", "username", "first_name", "last_name", "phone"])
             .then((response: any) => {
                 res.status(200).json(response);
@@ -65,16 +107,30 @@ export const createUser = (req: any, res: any) => {
     });
 };
 
-export const loginUser = (req: any, res: any) => {
-    // const user = req.body.user || req.body;
-    // if (!_.isNil(user))
-    //     knex.insert(user).into("user")
-    //     .then((response: any) => {
-    //         res.status(200).json(response);
-    //     })
-    //     .catch((err) => {
-    //         res.status(500).json(err);
-    //     });
-    // else 
-    //     res.status(500).json("Please provide user information");
+export const userLogin = (req: any, res: any) => {
+    const credentials = req.body.credentials || req.body;
+    if (!_.isNil(credentials)) {
+        checkUserPassword(credentials)
+        .then((userPasswordMatch) => {
+            if (userPasswordMatch) {
+                findUserByEmail(credentials.email)
+                .then((user) => {
+                    return updateUserToken(user[0]);
+                })
+                .then((user) => {
+                    res.status(200).json(user);
+                })
+                .catch((err) => {
+                    res.status(500).json("Something went wrong, unable to Sign In");
+                })
+            }
+            else
+                res.status(422).json("Username or Password does not match. Please try again.");
+        })
+        .catch((err) => {
+            res.status(500).json("Something went wrong. Unable to validate Password");
+        });
+    } else {
+        res.status(500).json("Please provide user information");
+    }
 };
