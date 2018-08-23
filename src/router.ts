@@ -6,5 +6,8 @@ export const appRouter = (router: any)  => {
     router.get("/api/users", UserController.getUsers);
 
     router.post("/api/users/create", UserController.createUser);
-    router.post("/api/users/login", UserController.userLogin);
+    router.post("/api/users/login", UserController.loginUser);
+    router.post("/api/users/logout", UserController.logoutUser);
+
+    router.put("/api/users/:userId/update", UserController.updateUserDetails);
 };
