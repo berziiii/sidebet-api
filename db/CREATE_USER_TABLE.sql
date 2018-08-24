@@ -12,5 +12,6 @@ CREATE TABLE public.user (
    phone VARCHAR(10),
    created_at VARCHAR(50) NOT NULL,
    last_login VARCHAR(50) NOT NULL,
-   is_admin Boolean NOT NULL
+   is_admin BOOLEAN NOT NULL,
+   is_active BOOLEAN NOT NULL
 );

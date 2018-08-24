@@ -12,7 +12,8 @@ export const appRouter = (router: any)  => {
   router.delete("/api/users/:userId/delete", UserController.deleteUser);
 
   // ADMIN ENDPOINTS
-  router.post("/admin/users", UserController.adminGetUsers);
+  router.get("/admin/users", UserController.adminGetUsers);
+  
   router.post("/admin/users/:userId/update", UserController.adminUpdateUser);
 
   router.delete("/admin/users/:userId/delete", UserController.adminDeleteUser);
