@@ -1,13 +1,19 @@
 import * as UserController from "./controllers/userController";
 
 export const appRouter = (router: any)  => {
-      // **** ROOT ROUTE **** //
-    // GET for root
-    router.get("/api/users", UserController.getUsers);
+  // USER ENPOINTS
+  router.post("/api/users/signup", UserController.createUser);
+  router.post("/api/users/login", UserController.loginUser);
 
-    router.post("/api/users/create", UserController.createUser);
-    router.post("/api/users/login", UserController.loginUser);
-    router.post("/api/users/logout", UserController.logoutUser);
+  router.put("/api/users/:userId/password", UserController.updateUserPassword);
+  router.put("/api/users/:userId/update", UserController.updateUserInformation);
 
-    router.put("/api/users/:userId/update", UserController.updateUserDetails);
+  router.delete("/api/users/:userId/logout", UserController.logoutUser);
+  router.delete("/api/users/:userId/delete", UserController.deleteUser);
+
+  // ADMIN ENDPOINTS
+  router.post("/admin/users", UserController.adminGetUsers);
+  router.post("/admin/users/:userId/update", UserController.adminUpdateUser);
+
+  router.delete("/admin/users/:userId/delete", UserController.adminDeleteUser);
 };

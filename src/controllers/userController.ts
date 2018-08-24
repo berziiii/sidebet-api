@@ -1,156 +1,82 @@
-import { KNEX_CONFIG } from "../config";
+import { KNEX_CONFIG, APP_SECRET_KEY } from "../config";
 import * as _ from "lodash";
 import * as _knex from "knex";
-import * as bcrypt from "bcrypt";
-import * as uuid from "uuid";
-import * as moment from "moment";
+import * as UserHelpers from "../helpers/userHelpers";
 
 const knex = _knex(KNEX_CONFIG);
 
-const getAccessToken = (req: any) => {
-    return req.headers.authorization.split("token=")[1];
-};
+// USER ENDPOINTS
 
-const bcryptPassword = (password: string) => {
-    const saltRounds = 10;
-    const salt = bcrypt.genSaltSync(saltRounds);
-    const hash = bcrypt.hashSync(password, salt);
-    return hash;
-};
-
-const formatUserAttributes = (user: any) => {
-    user.password = bcryptPassword(user.password);
-    user.created_at = moment().format();
-    user.last_login = moment().format();
-    user.user_id = uuid().replace(/-/g, "");
-    user.token = uuid();
-    return user;
-};
-
-const checkUserPassword = (credentials: any) => {
-    return new Promise((resolve, reject) => {
-        if (!_.isNil(credentials)) {
-            findUserByEmail(credentials.email)
-            .then((user: any) => {
-                return bcrypt.compare(credentials.password, user.password, (err, res) => {
-                    if (err)
-                        reject(err);
-                    resolve(res);
+export const createUser = (req: any, res: any) => {
+    let user = req.body.user || req.body;
+    if (user.app_secret_key === APP_SECRET_KEY) {
+        delete user.app_secret_key;
+        UserHelpers.checkIfUserExists(user.email)
+        .then((userExist: boolean) => {
+            if (!_.isNil(user) && !userExist) {
+                user = UserHelpers.formatUserAttributes(user);
+                knex.insert(user).into("user")
+                .returning(["user_id", "email", "token", "username", "first_name", "last_name", "phone"])
+                .then((userData: []) => {
+                    res.status(200).json(userData[0]);
+                })
+                .catch((err: any) => {
+                    console.error(err);
+                    res.status(500).json(err);
                 });
-            })
-            .catch((err) => {
-                reject(err);
-            });
-        } else {
-            reject("No User Credentials Prodived");
-        }
-    });
-};
-
-export const findUserByUserID = (user_id: string) => {
-    return new Promise((resolve, reject) => {
-        if (!_.isNil(user_id)) {
-            knex("user").where("user_id", `${user_id}`)
-            .then((res: any) => {
-                resolve(res[0]);
-            })
-            .catch((err: any) => {
-                reject(err);
-            });
-        } else {
-            reject("No User ID");
-        }
-    });
-};
-
-export const validUserToken = (credentials: any) => {
-    return new Promise((resolve, reject) => {
-        if (!_.isNil(credentials)) {
-            findUserByUserID(credentials.user_id)
-            .then((user: any) => {
-                if (user.token === credentials.token) {
-                    resolve(true);
+            } else {
+                if (_.isNil(user)) {
+                    res.status(500).json("Please provide user information");
+                } else {
+                    res.status(422).json("User already exists");
                 }
-                resolve(false);
-            })
-            .catch((err: any) => {
-                console.assert(err);
-                reject(err);
-            });
-        } else {
-            reject("No User Credentials");
-        }
-    });
+            }
+        })
+        .catch((err: any) => {
+            console.error(err);
+            res.status(500).json("Something went wrong");
+        });
+    } else {
+        res.status(422).json("Application Secret Key not valid or missing. Please try again.");
+    }
 };
 
-const findUserByEmail = (userEmail: string) => {
-    return new Promise((resolve, reject) => {
-        if (!_.isNil(userEmail)) {
-            knex("user").where("email", `${userEmail}`)
-            .then((res: any) => {
-                resolve(res[0]);
-            })
-            .catch((err: any) => {
-                reject(err);
-            });
-        } else {
-            reject("No User Email");
-        }
-    });
-};
-
-const updateUserToken = (user: any) => {
-    return new Promise((resolve, reject) => {
-        if (!_.isNil(user)) {
-            const newToken = uuid();
-            const newLogin = moment().format();
-            knex("user").where("email", `${user.email}`)
-            .update({"token": newToken, "last_login": newLogin})
-            .returning(["user_id", "email", "token", "username", "first_name", "last_name", "phone"])
-            .then((res: []) => {
-                resolve(res[0]);
-            })
-            .catch((err: any) => {
-                reject(err);
-            });
-        } else {
-            reject("No User Found");
-        }
-    });
-};
-
-const checkIfUserExists = (userEmail: string) => {
-    return new Promise((resolve, reject) => {
-        if (!_.isNil(userEmail)) {
-            knex("user").where("email", `${userEmail}`)
-            .then((res: []) => {
-                if (res.length !== 0)
-                    resolve(true);
-                resolve(false);
-            })
-            .catch((err: any) => {
-                reject(err);
-            });
-        } else {
-            reject("No User Email Provided");
-        }
-    });
-};
-
-export const getUsers = (req: any, res: any) => {
-    knex.select().from("user")
-    .then((users: []) => {
-        res.status(200).json(users);
-    })
-    .catch((err: any) => {
-        console.assert(err);
-        res.status(500).json(err);
-    });
+export const loginUser = (req: any, res: any) => {
+    const credentials = req.body.credentials || req.body;
+    if (!_.isNil(credentials)) {
+        UserHelpers.checkUserPassword(credentials)
+        .then((userPasswordMatch: boolean) => {
+            if (userPasswordMatch) {
+                UserHelpers.findUserByEmail(credentials.email)
+                .then((user: {}) => {
+                    return UserHelpers.updateUserToken(user);
+                })
+                .then((user: {}) => {
+                    res.status(200).json(user);
+                })
+                .catch((err) => {
+                    console.error(err);
+                    res.status(500).json("Something went wrong, unable to Sign In");
+                });
+            } else {
+                res.status(422).json("Username or Password does not match. Please try again.");
+            }
+        })
+        .catch((err) => {
+            console.error(err);
+            res.status(500).json("Something went wrong. Unable to validate Password");
+        });
+    } else {
+        res.status(500).json("Please provide user information");
+    }
 };
 
 export const logoutUser = (req: any, res: any) => {
-    const credentials = req.body.user || req.body;
-    validUserToken(credentials)
+    const credentials = {
+        "token": UserHelpers.getAccessToken(req),
+        "user_id": req.params.userId,
+    };
+    UserHelpers.validUserToken(credentials)
     .then((validToken: any) => {
         if (validToken) {
             knex("user").where("user_id", credentials.user_id)
@@ -159,7 +85,7 @@ export const logoutUser = (req: any, res: any) => {
                 res.status(200).json("Successfully Logged Out");
             })
             .catch((err) => {
-                console.assert(err);
+                console.error(err);
                 res.status(500).json(err);
             });
         } else {
@@ -167,48 +93,19 @@ export const logoutUser = (req: any, res: any) => {
         }
     })
     .catch((err: any) => {
-        console.assert(err);
+        console.error(err);
         res.status(500).json(err);
     });
 };
 
-export const createUser = (req: any, res: any) => {
-    let user = req.body.user || req.body;
-    checkIfUserExists(user.email)
-    .then((userExist: boolean) => {
-        if (!_.isNil(user) && !userExist) {
-            user = formatUserAttributes(user);
-            knex.insert(user).into("user")
-            .returning(["user_id", "email", "token", "username", "first_name", "last_name", "phone"])
-            .then((response: {}) => {
-                res.status(200).json(response);
-            })
-            .catch((err: any) => {
-                console.assert(err);
-                res.status(500).json(err);
-            });
-        } else {
-            if (_.isNil(user)) {
-                res.status(500).json("Please provide user information");
-            } else {
-                res.status(422).json("User already exists");
-            }
-        }
-    })
-    .catch((err: any) => {
-        console.assert(err);
-        res.status(500).json("Something went wrong");
-    });
-};
-
-export const updateUserDetails = (req: any, res: any) => {
+export const updateUserInformation = (req: any, res: any) => {
     const userData = req.body.user || req.body;
     const credentials = {
-        "token": getAccessToken(req),
+        "token": UserHelpers.getAccessToken(req),
         "user_id": req.params.userId,
     };
     if (!_.isNil(userData)) {
-        validUserToken(credentials)
+        UserHelpers.validUserToken(credentials)
         .then((validToken: boolean) => {
             if (validToken) {
                 knex("user").where("user_id", credentials.user_id)
@@ -218,47 +115,169 @@ export const updateUserDetails = (req: any, res: any) => {
                     res.status(200).json(user[0]);
                 })
                 .catch((err: any) => {
-                    console.assert(err);
-                    res.status(500).json("Something went wrong. Unable to update User data");
+                    console.error(err);
+                    res.status(500).json("Something went wrong. Unable to update User Details");
                 });
             } else {
                 res.status(403).json("Unauthorized Action");
             }
         })
         .catch((err: any) => {
-            console.assert(err);
+            console.error(err);
+            res.status(500).json("Something went wrong. Unable to update User Details");
         });
     } else {
         res.status(422).json("No User Data");
     }
 };
 
-export const loginUser = (req: any, res: any) => {
-    const credentials = req.body.credentials || req.body;
-    if (!_.isNil(credentials)) {
-        checkUserPassword(credentials)
-        .then((userPasswordMatch: boolean) => {
-            if (userPasswordMatch) {
-                findUserByEmail(credentials.email)
-                .then((user: {}) => {
-                    return updateUserToken(user);
+export const updateUserPassword = (req: any, res: any) => {
+    const userData = req.body.user || req.body;
+    const credentials = {
+        "token": UserHelpers.getAccessToken(req),
+        "user_id": req.params.userId,
+    };
+    if (!_.isNil(userData)) {
+        UserHelpers.validUserToken(credentials)
+        .then((validToken: boolean) => {
+            if (validToken) {
+                const newUserPassword = UserHelpers.bcryptPassword(userData.password);
+                knex("user").where("user_id", credentials.user_id)
+                .update("password", newUserPassword)
+                .then(() => {
+                    res.status(200).json("Password Successfull Updated");
                 })
-                .then((user: {}) => {
-                    res.status(200).json(user);
-                })
-                .catch((err) => {
-                    console.assert(err);
-                    res.status(500).json("Something went wrong, unable to Sign In");
+                .catch((err: any) => {
+                    console.error(err);
+                    res.status(500).json("Something went wrong. Unable to update User password");
                 });
             } else {
-                res.status(422).json("Username or Password does not match. Please try again.");
+                res.status(403).json("Unauthorized Action");
             }
         })
-        .catch((err) => {
-            console.assert(err);
-            res.status(500).json("Something went wrong. Unable to validate Password");
+        .catch((err: any) => {
+            console.error(err);
+            res.status(500).json("Something went wrong. Unable to update User password");
         });
     } else {
-        res.status(500).json("Please provide user information");
+        res.status(422).json("No User Data");
     }
+};
+
+export const deleteUser = (req: any, res: any) => {
+    const credentials = {
+        "token": UserHelpers.getAccessToken(req),
+        "user_id": req.params.userId,
+    };
+    UserHelpers.validUserToken(credentials)
+    .then((validToken: boolean) => {
+        if (validToken) {
+            knex("user")
+            .where("user_id", credentials.user_id)
+            .del()
+            .then(() => {
+                res.status(200).json("User Successfully Deleted");
+            })
+            .catch((err: any) => {
+                console.error(err);
+                res.status(500).json(err);
+            });
+        } else {
+            res.status(422).json("Unauthorized or not a valid Token");
+        }
+    })
+    .catch((err: any) => {
+        console.error(err);
+        res.status(500).json("Something went wrong. Unable to Delete user");
+    });
+};
+
+// ADMIN ENDPOINTS
+
+export const adminGetUsers = (req: any, res: any) => {
+    const credentials = {
+        "token": UserHelpers.getAccessToken(req),
+    };
+    UserHelpers.isUserAdmin(credentials)
+    .then((isAdmin: any) => {
+        if (isAdmin) {
+            knex.select(["user_id", "email", "username", "first_name", "last_name", "phone", "last_login", "created_at", "is_admin", "is_active"])
+            .from("user")
+            .orderBy("created_at", "desc")
+            .then((users: []) => {
+                res.status(200).json(users);
+            })
+            .catch((err: any) => {
+                console.error(err);
+                res.status(500).json(err);
+            });
+        } else {
+            res.status(422).json("Unauthorized User. Admin Priviledges required");
+        }
+    })
+    .catch((err: any) => {
+        console.error(err);
+        res.status(500);
+    });
+};
+
+export const adminUpdateUser = (req: any, res: any) => {
+    const userInfo = req.body.user || req.body;
+    const userId = req.params.userId;
+    const credentials = {
+        "token": UserHelpers.getAccessToken(req)
+    };
+    if (!_.isNil(userInfo.password)) {
+        userInfo.password = UserHelpers.bcryptPassword(userInfo.password);
+    }
+    UserHelpers.isUserAdmin(credentials)
+    .then((isAdmin: boolean) => {
+        if (isAdmin) {
+            knex("user")
+            .where("user_id", userId)
+            .update(userInfo)
+            .returning(["user_id", "email", "username", "first_name", "last_name", "phone", "last_login", "created_at", "is_admin", "is_active"])
+            .then((user: any) => {
+                res.status(200).json(user[0]);
+            })
+            .catch((err: any) => {
+                console.error(err);
+                res.status(500).json(err);
+            });
+        } else {
+            res.status(422).json("Unauthorized or not a valid Token");
+        }
+    })
+    .catch((err: any) => {
+        console.error(err);
+        res.status(500).json("Something went wrong. Unable to update user");
+    });
+};
+
+export const adminDeleteUser = (req: any, res: any) => {
+    const credentials = {
+        "token": UserHelpers.getAccessToken(req),
+        "user_id": req.params.userId,
+    };
+    UserHelpers.isUserAdmin(credentials)
+    .then((isAdmin: boolean) => {
+        if (isAdmin) {
+            knex("user")
+            .where("user_id", credentials.user_id)
+            .del()
+            .then(() => {
+                res.status(200).json("User Successfully Deleted");
+            })
+            .catch((err: any) => {
+                console.error(err);
+                res.status(500).json(err);
+            });
+        } else {
+            res.status(422).json("Unauthorized or not a valid Token");
+        }
+    })
+    .catch((err: any) => {
+        console.error(err);
+        res.status(500).json("Something went wrong. Unable to Delete user");
+    });
 };
