@@ -38,7 +38,7 @@
             true,
             "variables-before-functions"
         ],
-        "no-angle-bracket-type-assertion": true,
+        "no-angle-bracket-type-errorion": true,
         "no-arg": true,
         "no-bitwise": false,
         "no-console": {

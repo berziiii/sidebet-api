@@ -36,6 +36,7 @@
         /* Enables experimental support for emitting type metadata for decorators. */
     },
     "exclude": [
-        "node_modules"
+        "node_modules",
+        "db/**"
     ]
 }
