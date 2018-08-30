@@ -16,6 +16,9 @@ export const getAllWagers = (req: any, res: any) => {
             res.status(422).json("Unauthorized or not a valid Token");
         }
     })
+    .then((wagers: any) => {
+        return WagerHelpers.findAllUsersForWagers(wagers);
+    })
     .then((allWagers: any) => {
         res.status(200).json(allWagers);
     })
@@ -40,6 +43,9 @@ export const getWager = (req: any, res: any) => {
     })
     .then((wager: any) => {
         return WagerHelpers.findWagerOptionsByWagerId(wager);
+    })
+    .then((wager: any) => {
+        return WagerHelpers.findUsersWhoBetOnWager(wager);
     })
     .then((wager: any) => {
         if (!_.isNil(wager)) {
@@ -94,6 +100,7 @@ export const createWagerOption = (req: any, res: any) => {
         if (wagerOptionData.owner_id === user.user_id) {
             if (AppHelpers.validateObjectKeys(wagerOptionData, WagerHelpers.PERMIT_WAGER_OPTION_KEYS)) {
                 wagerOptionData.wager_id = credentials.wager_id;
+                wagerOptionData.option_id = AppHelpers.uuidForID();
                 return WagerHelpers.insertWagerOptionData(wagerOptionData);
             }
             res.status(422).json("Invalid Wager Option Data");
@@ -106,7 +113,7 @@ export const createWagerOption = (req: any, res: any) => {
     })
     .catch((err: any) => {
         console.error(err);
-        res.status(500).json("Something went wrong. Unable to create Wager");
+        res.status(500).json("Something went wrong. Unable to create Wager Option");
     });
 };
 
@@ -120,9 +127,15 @@ export const updateWagerDetails = (req: any, res: any) => {
     .then((user: any) => {
         if (AppHelpers.validateObjectKeys(wagerData, WagerHelpers.PERMIT_WAGER_KEYS)) {
             wagerData.last_modified = AppHelpers.currentTime();
-            return WagerHelpers.validateUserOwnsWager(user, credentials, wagerData);
+            return WagerHelpers.validateUserOwnsWager(user, credentials);
         }
         res.status(422).json("Invalid Wager Data");
+    })
+    .then((isOwner: boolean) => {
+        if (isOwner) {
+            return WagerHelpers.updateWagerData(wagerData, credentials);
+        }
+        res.status(403).json("Unauthorized");
     })
     .then((response: any) => {
         res.status(200).json(response[0]);
@@ -133,23 +146,80 @@ export const updateWagerDetails = (req: any, res: any) => {
     });
 };
 
-// export const removeAllUserRelatedItems = (req: any, res: any) => {
-//     const credentials = {
-//         token: UserHelpers.getAccessToken(req),
-//         user_id: req.params.userId,
-//     };
-//     WagerHelpers.deleteUserWagers(credentials)
-//     .then(() => { return WagerHelpers.deleteUserOptions(credentials); })
-//     // .then(() => { return WagerHelpers.deleteUserBets(credentials); })
-//     .then(() => {
-//         res.status(200).json("All User Data Removed Successfully");
-//     })
-//     .catch((err: any) => {
-//         console.error(err);
-//         res.status(500).json(err);
-//     });
-// };
+export const deleteWager = (req: any, res: any) => {
+    const credentials: any = {
+        token: UserHelpers.getAccessToken(req),
+        wager_id: req.params.wagerId
+    };
+    UserHelpers.findUserByToken(credentials)
+    .then((user: any) => {
+        return WagerHelpers.validateUserOwnsWager(user, credentials);
+    })
+    .then((isOwner: boolean) => {
+        if (isOwner) {
+            return WagerHelpers.deleteWager(credentials);
+        }
+        res.status(403).json("Unauthorized");
+    })
+    .then(() => {
+        res.status(200).json("Wager Successfully Deleted");
+    })
+    .catch((err: any) => {
+        console.error(err);
+        res.status(500).json("Something went wrong. Unable to delete Wager");
+    });
+};
+
+export const updateWagerOptionDetails = (req: any, res: any) => {
+    const credentials: any = {
+        token: UserHelpers.getAccessToken(req),
+        option_id: req.params.optionId
+    };
+    const wagerOptionData = req.body.option || req.body;
+    UserHelpers.findUserByToken(credentials)
+    .then((user: any) => {
+        return WagerHelpers.validateUserOwnsWagerOption(user, credentials);
+    })
+    .then((isOwner: boolean) => {
+        if (isOwner) {
+            if (AppHelpers.validateObjectKeys(wagerOptionData, WagerHelpers.PERMIT_WAGER_OPTION_KEYS)) {
+                return WagerHelpers.updateWagerOptionData(wagerOptionData, credentials);
+            }
+            res.status(422).json("Invalid Wager Option Data");
+        }
+        res.status(403).json("Unauthorized");
+    })
+    .then((updatedOption: any) => {
+        res.status(200).json(updatedOption);
+    })
+    .catch((err: any) => {
+        console.error(err);
+        res.status(500).json("Something went wrong. Unable to Update Wager Option");
+    });
+};
+
+export const deleteWagerOption = (req: any, res: any) => {
+    const credentials: any = {
+        token: UserHelpers.getAccessToken(req),
+        option_id: req.params.optionId
+    };
+    UserHelpers.findUserByToken(credentials)
+    .then((user: any) => {
+        return WagerHelpers.validateUserOwnsWagerOption(user, credentials);
+    })
+    .then((isOwner: boolean) => {
+        if (isOwner) {
+            return WagerHelpers.deleteWagerOption(credentials);
+        }
+        res.status(403).json("Unauthorized");
+    })
+    .then(() => {
+        res.status(200).json("Wager Option Successfully Deleted");
+    })
+    .catch((err: any) => {
+        console.error(err);
+        res.status(500).json("Something went wrong. Unable to create Wager");
+    });
+};
 
 // Invite Users to Private Wager
-
-// Update Wager

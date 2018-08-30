@@ -2,49 +2,15 @@ import { KNEX_CONFIG } from "../config";
 import * as _ from "lodash";
 import * as _knex from "knex";
 import * as AppHelper from "./appHelpers";
+import * as UserHelper from "./userHelpers";
+import * as BetHelper from "./betHelpers";
 
 const knex = _knex(KNEX_CONFIG);
 
-export const PERMIT_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "wager_description", "wager_prize_type", "wager_prize", "wager_buy_in", "last_modified"];
-export const PERMIT_WAGER_OPTION_KEYS = ["owner_id", "wager_id", "wager_text", "is_winner"];
-
-export const insertWagerOptionData = (wagerOption: any) => {
-    return new Promise((resolve, reject) => {
-        if (!_.isNil(wagerOption)) {
-            knex("wager_option")
-            .insert(wagerOption)
-            .returning(PERMIT_WAGER_OPTION_KEYS)
-            .then((response: any) => {
-                resolve(response);
-            })
-            .catch((err: any) => {
-                console.error(err);
-                reject(err);
-            });
-        } else {
-            reject("Something went wrong. Unable to insert Wager Option");
-        }
-    });
-};
-
-export const insertWagerData = (wager: any) => {
-    return new Promise((resolve, reject) => {
-        if (!_.isNil(wager)) {
-            knex("wager")
-            .insert(wager)
-            .returning(PERMIT_WAGER_KEYS)
-            .then((response: any) => {
-                resolve(response);
-            })
-            .catch((err: any) => {
-                console.error(err);
-                reject(err);
-            });
-        } else {
-            reject("Something went wrong. Unable to insert Wager");
-        }
-    });
-};
+export const PERMIT_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "wager_title", "wager_description", "wager_prize_type", "wager_prize", "wager_buy_in", "last_modified"];
+export const RESPONSE_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "wager_title", "wager_description", "wager_prize_type", "wager_prize", "wager_buy_in", "last_modified"];
+export const PERMIT_WAGER_OPTION_KEYS = ["owner_id", "wager_id", "option_text", "is_winner"];
+export const RESPONSE_WAGER_OPTION_KEYS = ["option_id", "owner_id", "wager_id", "option_text", "is_winner"];
 
 export const validateNewWagerData = (wager: any) => {
     if (!_.isNil(wager)) {
@@ -55,6 +21,36 @@ export const validateNewWagerData = (wager: any) => {
         return wager;
     }
     return "No Wager Data or Invalid Data";
+};
+
+export const insertWagerOptionData = (wagerOption: any) => {
+    return new Promise((resolve, reject) => {
+            knex("option")
+            .insert(wagerOption)
+            .returning(RESPONSE_WAGER_OPTION_KEYS)
+            .then((response: any) => {
+                resolve(response);
+            })
+            .catch((err: any) => {
+                console.error(err);
+                reject(err);
+            });
+    });
+};
+
+export const insertWagerData = (wager: any) => {
+    return new Promise((resolve, reject) => {
+        knex("wager")
+        .insert(wager)
+        .returning(RESPONSE_WAGER_KEYS)
+        .then((response: any) => {
+            resolve(response);
+        })
+        .catch((err: any) => {
+            console.error(err);
+            reject(err);
+        });
+    });
 };
 
 export const getAllWagers = () => {
@@ -104,7 +100,7 @@ export const findWagerByID = (credentials: any) => {
 
 export const findWagerOptionsByWagerId = (wager: any) => {
     return new Promise((resolve, reject) => {
-        knex.select().from("wager_option").where("wager_id", wager.wager_id)
+        knex.select().from("option").where("wager_id", wager.wager_id)
         .then((options: any) => {
             wager.options = options;
             resolve(wager);
@@ -120,7 +116,7 @@ export const updateWagerData = (wagerData: any, credentials: any) => {
     return new Promise((resolve, reject) => {
         knex("wager").where("wager_id", credentials.wager_id)
         .update(wagerData)
-        .returning(PERMIT_WAGER_KEYS)
+        .returning(RESPONSE_WAGER_KEYS)
         .then((res) => {
             resolve(res);
         })
@@ -131,17 +127,115 @@ export const updateWagerData = (wagerData: any, credentials: any) => {
     });
 };
 
-export const validateUserOwnsWager = (user: any, credentials: any, wagerData: any) => {    
+export const validateUserOwnsWager = (user: any, credentials: any) => {    
     return new Promise((resolve, reject) => {
         knex("wager").where("wager_id", credentials.wager_id)
         .then((wager: any) => {
             wager = wager[0];
             if (wager.owner_id === user.user_id) {
-                return updateWagerData(wagerData, credentials);
+                resolve(true);
             }
+            resolve(false);
         })
-        .then((res: any) => {
-            resolve(res);
+        .catch((err) => {
+            console.error(err);
+            reject(err);
+        });
+    });
+};
+
+export const validateUserOwnsWagerOption = (user: any, credentials: any) => {    
+    return new Promise((resolve, reject) => {
+        knex("option").where("option_id", credentials.option_id)
+        .then((option: any) => {
+            option = option[0];
+            if (option.owner_id === user.user_id) {
+                resolve(true);
+            }
+            resolve(false);
+        })
+        .catch((err) => {
+            console.error(err);
+            reject(err);
+        });
+    });
+};
+
+export const deleteWager = (credentials: any) => {
+    return new Promise((resolve, reject) => {
+        knex("wager").where("wager_id", credentials.wager_id)
+        .del()
+        .then(() => {
+            resolve();
+        })
+        .catch((err) => {
+            console.error(err);
+            reject(err);
+        });
+    });
+};
+
+export const deleteWagerOption = (credentials: any) => {
+    return new Promise((resolve, reject) => {
+        knex("option").where("option_id", credentials.option_id)
+        .del()
+        .then(() => {
+            resolve();
+        })
+        .catch((err) => {
+            console.error(err);
+            reject(err);
+        });
+    });
+};
+
+export const updateWagerOptionData = (wagerOption: any, credentials: any) => {
+    return new Promise((resolve, reject) => {
+        knex("option").where("option_id", credentials.option_id)
+        .update(wagerOption)
+        .returning(RESPONSE_WAGER_OPTION_KEYS)
+        .then((response: any) => {
+            resolve(response);
+        })
+        .catch((err: any) => {
+            console.error(err);
+            reject(err);
+        });
+    });
+};
+
+export const findUsersWhoBetOnWager = (wager: any) => {
+    return new Promise((resolve, reject) => {
+        if (wager.options.length > 0) {
+            const promiseChain: any = [];
+            _.each(wager.options, (option: any) => {
+                promiseChain.push(BetHelper.findUsersBetsByWagerID(option.option_id));
+            });
+            Promise.all(promiseChain)
+            .then((res) => {
+                wager.bets = _.flattenDeep(res);
+                resolve(wager);
+            })
+            .catch((err) => {
+                console.error(err);
+                reject(err);
+            });
+        } else {
+            wager.bets = [];
+            resolve(wager);
+        }
+    });
+};
+
+export const findAllUsersForWagers = (wagers: any) => {
+    return new Promise((resolve, reject) => {
+        const promiseChain: any = [];
+        _.each(wagers, (wager: any) => {
+            promiseChain.push(findUsersWhoBetOnWager(wager));
+        });
+        Promise.all(promiseChain)
+        .then((allWagers: any) => {
+            resolve(allWagers);
         })
         .catch((err) => {
             console.error(err);

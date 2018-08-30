@@ -30,16 +30,23 @@ export const appRouter = (router: any)  => {
   router.post("/api/wagers/:wagerId/options/create", WagersController.createWagerOption);
 
   router.put("/api/wagers/:wagerId/update", WagersController.updateWagerDetails);
+  router.put("/api/wagers/:wagerId/options/:optionId/update", WagersController.updateWagerOptionDetails);
+
+  router.delete("/api/wagers/:wagerId/delete", WagersController.deleteWager);
+  router.delete("/api/wagers/:wagerId/options/:optionId/delete", WagersController.deleteWagerOption);
 
   // ********************************* //
   // ************ BETS ************* //
   // ********************************* //
-  router.get("/api/bets/:betId", WagersController.getWager);
-  router.get("/api/bets", WagersController.getAllWagers);
+  // router.get("/api/bets/:betId", BetsController.getBetByID);
+  // router.get("/api/bets", BetsController.getBets);
+  // router.get("/api/")
 
-  router.post("/api/bets/create", WagersController.createWager);
+  router.post("/api/wagers/:wagerId/bet", BetsController.enterBet);
 
-  router.put("/api/bets/:betId/update", WagersController.updateWagerDetails);
+  // router.put("/api/bets/:betId/update", BetsController.updateBet);
+
+  router.delete("/api/wagers/:wagerId/bet/:betId", BetsController.deleteBet);
 
   // ************************************* //
   // ************ ADMIN USER ************* // 
@@ -49,5 +56,5 @@ export const appRouter = (router: any)  => {
   router.post("/admin/users/:userId/update", AdminController.adminUpdateUser);
 
   router.delete("/admin/users/:userId/delete", AdminController.adminDeleteUser);
-  // router.delete("/admin/wagers/:wagerId/delete", AdminController.adminDeleteWagerAndOptions);
+  router.delete("/admin/wagers/:wagerId/delete", AdminController.adminDeleteWager);
 };
