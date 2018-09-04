@@ -32,6 +32,7 @@ export const isUserAdmin = (credentials: any) => {
 
 export const findUserByToken = (credentials: any) => {
     return knex.select("*").from("user").where("token", credentials.token)
+    .returning(USER_RESPONSE_KEYS)
     .then((user: any) => {
         if (user.length > 0) {
             return user[0];

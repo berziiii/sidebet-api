@@ -9,7 +9,7 @@ CREATE TABLE public.user (
    token VARCHAR(255), 
    first_name VARCHAR(50), 
    last_name VARCHAR(50), 
-   phone VARCHAR(10),
+   phone VARCHAR(50),
    created_at VARCHAR(50) NOT NULL,
    last_login VARCHAR(50) NOT NULL,
    is_admin BOOLEAN NOT NULL,

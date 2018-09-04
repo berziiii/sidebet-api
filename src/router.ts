@@ -7,6 +7,8 @@ export const appRouter = (router: any)  => {
   // ****************************** //
   // *********** USERS ************ //
   // ****************************** //
+  router.get("/api/users/fetchuser", UsersController.validateUserToken);
+  
   router.post("/api/users/signup", UsersController.createUser);
   router.post("/api/users/login", UsersController.loginUser);
 

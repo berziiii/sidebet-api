@@ -1,13 +1,28 @@
-import { KNEX_CONFIG, APP_SECRET_KEY } from "../config";
+import { APP_SECRET_KEY } from "../config";
 import * as _ from "lodash";
 import * as _knex from "knex";
 import * as UserHelpers from "../helpers/userHelpers";
 import * as AppHelpers from "../helpers/appHelpers";
-import * as WagerController from "./wagersController";
-
-const knex = _knex(KNEX_CONFIG);
 
 // USER ENDPOINTS
+
+export const validateUserToken = (req: any, res: any) => {
+    const credentials = {
+        token: UserHelpers.getAccessToken(req),
+    };
+    UserHelpers.findUserByToken(credentials)
+    .then((user: any) => {
+        if (!_.isNil(user)) {
+            res.status(200).json(user);
+        } else {
+            res.status(422).json("Unauthorized or Invalid Token");
+        }
+    })
+    .catch((err) => {
+        console.error(err);
+        res.status(500).json("Something went wrong. Unable to validate Password");
+    });
+};
 
 export const createUser = (req: any, res: any) => {
     let user = req.body.user || req.body;
