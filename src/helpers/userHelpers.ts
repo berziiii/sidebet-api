@@ -62,23 +62,67 @@ export const isTokenActive = (credentials: any) => {
 
 export const bcryptPassword = (password: string) => {
     const saltRounds = 10;
-    const salt = bcrypt.genSaltSync(saltRounds);
-    const hash = bcrypt.hashSync(password, salt);
+    const hash = bcrypt.hashSync(password, saltRounds);
     return hash;
 };
 
+const validateEmail = (email: any) => {
+    const regEx = /^\S+@\S+\.\S+$/;
+    return regEx.test(email);
+};
+
+const validatePassword = (password: any) => {
+    return /[A-Z]/       .test(password) &&
+            /[a-z]/       .test(password) &&
+            /[0-9]/       .test(password) &&
+            /[!@#$%&*?]/g.test(password) &&
+            password.length >= 8;
+};
+
+const validateEmailAndPassword = (email: any, password: any) => {
+    if (validateEmail(email) && validatePassword(password)) {
+        return true;
+    } else if (!validateEmail(email)) {
+        return "Invalid Email";
+    } else if (!validatePassword(password)) {
+        return "Invalid Password";
+    }
+};
+
 export const formatUserAttributes = (user: any) => {
-    user.password = bcryptPassword(user.password);
-    user.created_at = AppHelper.currentTime();
-    user.last_login = user.created_at;
-    user.user_id = AppHelper.uuidForID();
-    user.token = AppHelper.uuidForToken();
-    user.is_active = true;
-    user.is_admin = user.is_admin || false;
-    return user;
+    const valid = validateEmailAndPassword(user.email, user.password);
+    if (valid === true) {
+        user.password = bcryptPassword(user.password);
+        user.created_at = AppHelper.currentTime();
+        user.last_login = user.created_at;
+        user.user_id = AppHelper.uuidForID();
+        user.token = AppHelper.uuidForToken();
+        user.is_active = true;
+        user.is_admin = user.is_admin || false;
+        return user;
+    } else {
+        return new Error(valid);
+    }
 };
 
 // HELPER QUERIES
+
+export const findUserByUsername = (username: any) => {
+    return new Promise((resolve, reject) => {
+         knex.select("*").from("user").where(
+              knex.raw(`LOWER(username) = LOWER('${username}')`)
+         )
+        .returning(USER_RESPONSE_KEYS)
+        .then((res: []) => {
+            if (res.length > 0) 
+                resolve(false);
+            resolve(true);
+        })
+        .catch((err: any) => {
+            reject(err);
+        });
+    });
+};
 
 export const updateUserToken = (user: any) => {
     return new Promise((resolve, reject) => {
@@ -100,11 +144,8 @@ export const checkUserPassword = (credentials: any) => {
     return new Promise((resolve, reject) => {
         findUserByEmail(credentials.email)
         .then((user: any) => {
-            return bcrypt.compare(credentials.password, user.password, (err, res) => {
-                if (err)
-                    reject(err);
-                resolve(res);
-            });
+            const match = bcrypt.compareSync(credentials.password, user.password);
+            resolve(match);
         })
         .catch((err) => {
             reject(err);

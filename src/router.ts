@@ -11,6 +11,7 @@ export const appRouter = (router: any)  => {
   
   router.post("/api/users/signup", UsersController.createUser);
   router.post("/api/users/login", UsersController.loginUser);
+  router.post("/api/users/validateUsername", UsersController.checkIfUsernameExists);
 
   router.put("/api/users/:userId/password", UsersController.updateUserPassword);
   router.put("/api/users/:userId/update", UsersController.updateUserInformation);

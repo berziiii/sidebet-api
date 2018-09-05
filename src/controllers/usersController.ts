@@ -3,8 +3,22 @@ import * as _ from "lodash";
 import * as _knex from "knex";
 import * as UserHelpers from "../helpers/userHelpers";
 import * as AppHelpers from "../helpers/appHelpers";
+import { resolve } from "path";
 
 // USER ENDPOINTS
+
+export const checkIfUsernameExists = (req: any, res: any) => {
+    UserHelpers.findUserByUsername(req.body.username)
+    .then((validUsername: string) => {
+        if (validUsername)
+            res.status(200).json(validUsername);
+        res.status(200).json(validUsername);
+    })
+    .catch((err: any) => {
+        console.error(err);
+
+    });
+};
 
 export const validateUserToken = (req: any, res: any) => {
     const credentials = {
@@ -35,12 +49,10 @@ export const createUser = (req: any, res: any) => {
                 return UserHelpers.insertUserData(user);
             } else if (!AppHelpers.validateObjectKeys(user, UserHelpers.PERMIT_USER_KEYS)) {
                 res.status(422).json("Invalid User Data");
+            } else if (_.isNil(user)) {
+                res.status(500).json("Please provide user information");
             } else {
-                if (_.isNil(user)) {
-                    res.status(500).json("Please provide user information");
-                } else {
-                    res.status(422).json("User already exists");
-                }
+                res.status(422).json("User already exists");
             }
         })
         .then((createdUser: any) => {
@@ -58,7 +70,14 @@ export const createUser = (req: any, res: any) => {
 export const loginUser = (req: any, res: any) => {
     const credentials = req.body.credentials || req.body;
     if (!_.isNil(credentials)) {
-        UserHelpers.checkUserPassword(credentials)
+        UserHelpers.findUserByEmail(credentials.email)
+        .then((account: any) => {
+            if (!_.isNil(account)) {
+                return UserHelpers.checkUserPassword(credentials);
+            } else {
+                res.status(404).json("Account does not exist. Please create one.");
+            }
+        })
         .then((userPasswordMatch: boolean) => {
             if (userPasswordMatch) {
                 UserHelpers.findUserByEmail(credentials.email)
@@ -70,7 +89,7 @@ export const loginUser = (req: any, res: any) => {
                 })
                 .catch((err) => {
                     console.error(err);
-                    res.status(500).json("Something went wrong, unable to Sign In");
+                    res.status(500).json("Something went wrong, unable to Sign In.");
                 });
             } else {
                 res.status(422).json("Username or Password does not match. Please try again.");
@@ -78,7 +97,7 @@ export const loginUser = (req: any, res: any) => {
         })
         .catch((err) => {
             console.error(err);
-            res.status(500).json("Something went wrong. Unable to validate Password");
+            res.status(500).json(err);
         });
     } else {
         res.status(500).json("Please provide user information");
