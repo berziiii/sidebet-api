@@ -10,7 +10,7 @@ const knex = _knex(KNEX_CONFIG);
 
 // HELPER METHODS
 export const PERMIT_USER_KEYS = ["user_id", "token", "email", "password", "username", "first_name", "last_name", "phone"];
-export const USER_RESPONSE_KEYS = ["user_id", "token", "email", "username", "first_name", "last_name", "phone"];
+export const USER_RESPONSE_KEYS = ["user_id", "token", "email", "username", "first_name", "last_name", "phone", "is_admin", "is_active"];
 
 export const getAccessToken = (req: any) => {
     return req.headers.authorization.split("token=")[1];
