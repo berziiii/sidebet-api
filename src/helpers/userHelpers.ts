@@ -142,7 +142,7 @@ export const updateUserToken = (user: any) => {
 
 export const checkUserPassword = (credentials: any) => {
     return new Promise((resolve, reject) => {
-        findUserByEmail(credentials.email)
+        findUserByEmailOrUsername(credentials.email)
         .then((user: any) => {
             const match = bcrypt.compareSync(credentials.password, user.password);
             resolve(match);
@@ -176,6 +176,22 @@ export const validUserToken = (credentials: any) => {
         })
         .catch((err: any) => {
             console.error(err);
+            reject(err);
+        });
+    });
+};
+
+export const findUserByEmailOrUsername = (credential: string) => {
+    return new Promise((resolve, reject) => {
+        knex("user").where(
+            knex.raw(`LOWER(email) = LOWER('${credential}')`)
+        ).orWhere(
+            knex.raw(`LOWER(username) = LOWER('${credential}')`)
+        )
+        .then((res: any) => {
+            resolve(res[0]);
+        })
+        .catch((err: any) => {
             reject(err);
         });
     });

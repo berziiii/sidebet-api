@@ -70,7 +70,7 @@ export const createUser = (req: any, res: any) => {
 export const loginUser = (req: any, res: any) => {
     const credentials = req.body.credentials || req.body;
     if (!_.isNil(credentials)) {
-        UserHelpers.findUserByEmail(credentials.email)
+        UserHelpers.findUserByEmailOrUsername(credentials.email)
         .then((account: any) => {
             if (!_.isNil(account)) {
                 return UserHelpers.checkUserPassword(credentials);
@@ -80,7 +80,7 @@ export const loginUser = (req: any, res: any) => {
         })
         .then((userPasswordMatch: boolean) => {
             if (userPasswordMatch) {
-                UserHelpers.findUserByEmail(credentials.email)
+                UserHelpers.findUserByEmailOrUsername(credentials.email)
                 .then((user: {}) => {
                     return UserHelpers.updateUserToken(user);
                 })
