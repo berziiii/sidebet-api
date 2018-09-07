@@ -55,8 +55,9 @@ export const appRouter = (router: any)  => {
   // ************ ADMIN USER ************* // 
   // ************************************* //
   router.get("/admin/users", AdminController.adminGetUsers);
+  router.get("/admin/users/:userId", AdminController.adminGetUser);
 
-  router.post("/admin/users/:userId/update", AdminController.adminUpdateUser);
+  router.put("/admin/users/:userId/update", AdminController.adminUpdateUser);
 
   router.delete("/admin/users/:userId/delete", AdminController.adminDeleteUser);
   router.delete("/admin/wagers/:wagerId/delete", AdminController.adminDeleteWager);

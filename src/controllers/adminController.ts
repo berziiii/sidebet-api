@@ -27,6 +27,28 @@ export const adminGetUsers = (req: any, res: any) => {
     });
 };
 
+export const adminGetUser = (req: any, res: any) => {
+    const credentials = {
+        token: UserHelpers.getAccessToken(req),
+        user_id: req.params.userId
+    };
+    UserHelpers.isUserAdmin(credentials)
+    .then((isAdmin: any) => {
+        if (isAdmin) {
+           return AdminHelpers.getUserById(credentials);
+        } else {
+            res.status(422).json("Unauthorized. Admin Priviledges required");
+        }
+    })
+    .then((user: any) => {
+        res.status(200).json(user);
+    })
+    .catch((err: any) => {
+        console.error(err);
+        res.status(500);
+    });
+};
+
 export const adminUpdateUser = (req: any, res: any) => {
     const userInfo = req.body.user || req.body;
     const credentials = {
