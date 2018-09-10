@@ -56,6 +56,7 @@ export const appRouter = (router: any)  => {
   // ************************************* //
   router.get("/admin/users", AdminController.adminGetUsers);
   router.get("/admin/users/:userId", AdminController.adminGetUser);
+  router.get("/admin/users/:userId/activity", AdminController.adminGetUserActivity);
 
   router.put("/admin/users/:userId/update", AdminController.adminUpdateUser);
 

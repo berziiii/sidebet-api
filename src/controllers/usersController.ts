@@ -3,7 +3,7 @@ import * as _ from "lodash";
 import * as _knex from "knex";
 import * as UserHelpers from "../helpers/userHelpers";
 import * as AppHelpers from "../helpers/appHelpers";
-import { resolve } from "path";
+import * as ActivityController from "./activityController";
 
 // USER ENDPOINTS
 
@@ -56,6 +56,10 @@ export const createUser = (req: any, res: any) => {
             }
         })
         .then((createdUser: any) => {
+            ActivityController.createUserActivity({
+                user_id: createdUser.user_id,
+                activity_text: "User created account"
+            });
             res.status(200).json(createdUser);
         })
         .catch((err: any) => {
@@ -146,6 +150,10 @@ export const updateUserInformation = (req: any, res: any) => {
             }
         })
         .then((updateUser: any) => {
+            ActivityController.createUserActivity({
+                user_id: updateUser.user_id,
+                activity_text: "User updated Account Information"
+            });
             res.status(200).json(updateUser[0]);
         })
         .catch((err: any) => {
@@ -178,6 +186,10 @@ export const updateUserPassword = (req: any, res: any) => {
             }
         })
         .then(() => {
+            ActivityController.createUserActivity({
+                user_id: credentials.user_id,
+                activity_text: "User Updated Password"
+            });
             res.status(200).json("Password Successfully Updated");
         })
         .catch((err: any) => {

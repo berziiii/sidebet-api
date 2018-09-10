@@ -3,7 +3,8 @@ import * as _knex from "knex";
 import * as UserHelpers from "../helpers/userHelpers";
 import * as AppHelpers from "../helpers/appHelpers";
 import * as AdminHelpers from "../helpers/adminHelpers";
-import * as WagerController from "./wagersController";
+import * as ActivityController from "./activityController";
+// import * as WagerController from "./wagersController";
 
 // ADMIN ENDPOINTS
 export const adminGetUsers = (req: any, res: any) => {
@@ -71,6 +72,36 @@ export const adminUpdateUser = (req: any, res: any) => {
         }
     })
     .then((updatedUser: any) => {
+        if (!_.isNil(userInfo.password))
+            ActivityController.createUserActivity({
+                user_id: credentials.user_id,
+                activity_text: "Admin Reset User Password"
+            });
+        else if (!_.isNil(userInfo.is_admin) && userInfo.is_admin)
+            ActivityController.createUserActivity({
+                user_id: credentials.user_id,
+                activity_text: "Admin Status added to User"
+            });
+        else if (!_.isNil(userInfo.is_admin) && !userInfo.is_admin)
+            ActivityController.createUserActivity({
+                user_id: credentials.user_id,
+                activity_text: "Admin Status removed from User"
+            });
+        else if (!_.isNil(userInfo.is_active) && userInfo.is_active)
+            ActivityController.createUserActivity({
+                user_id: credentials.user_id,
+                activity_text: "Active Status added to User"
+            });
+        else if (!_.isNil(userInfo.is_active) && !userInfo.is_active)
+            ActivityController.createUserActivity({
+                user_id: credentials.user_id,
+                activity_text: "Active Status removed to User"
+            });
+        else 
+            ActivityController.createUserActivity({
+                user_id: credentials.user_id,
+                activity_text: "Admin updated User Information"
+            });
         res.status(200).json(updatedUser[0]);
     })
     .catch((err: any) => {
@@ -120,5 +151,27 @@ export const adminDeleteWager = (req: any, res: any) => {
     .catch((err: any) => {
         console.error(err);
         res.status(500).json("Something went wrong. Unable to Delete user");
+    });
+};
+
+export const adminGetUserActivity = (req: any, res: any) => {
+    const credentials = {
+        token: UserHelpers.getAccessToken(req),
+        user_id: req.params.userId,
+    };
+    UserHelpers.isUserAdmin(credentials)
+    .then((isAdmin: boolean) => {
+        if (isAdmin) {
+            return ActivityController.getUserActivity(credentials.user_id);
+        } else {
+            res.status(422).json("Unauthorized or not a valid Token");
+        }
+    })
+    .then((activities: any) => {
+        res.status(200).json(activities);
+    })
+    .catch((err: any) => {
+        console.error(err);
+        res.status(500).json("Something went wrong. Unable to get User Activity");
     });
 };

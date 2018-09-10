@@ -2,7 +2,6 @@ import { KNEX_CONFIG } from "../config";
 import * as _ from "lodash";
 import * as _knex from "knex";
 import * as bcrypt from "bcrypt";
-import * as uuid from "uuid";
 import * as moment from "moment";
 import * as AppHelper from "./appHelpers";
 
@@ -94,7 +93,7 @@ export const formatUserAttributes = (user: any) => {
     if (valid === true) {
         user.password = bcryptPassword(user.password);
         user.created_at = AppHelper.currentTime();
-        user.last_login = user.created_at;
+        user.last_login = AppHelper.currentTime();
         user.user_id = AppHelper.uuidForID();
         user.token = AppHelper.uuidForToken();
         user.is_active = true;
@@ -126,7 +125,7 @@ export const findUserByUsername = (username: any) => {
 
 export const updateUserToken = (user: any) => {
     return new Promise((resolve, reject) => {
-        const newToken = uuid();
+        const newToken = AppHelper.uuidForToken();
         const newLogin = moment().format();
         knex("user").where("email", `${user.email}`)
         .update({"token": newToken, "last_login": newLogin})

@@ -81,3 +81,18 @@ export const deleteWager = (credentials: any) => {
         });
     });
 };
+
+export const getUserActivity = (credentials: any) => {
+    return new Promise((resolve, reject) => {
+        knex("activity")
+        .where("user_id", credentials.user_id)
+        .returning(["timestamp", "activity_text"])
+        .then(() => {
+            resolve();
+        })
+        .catch((err: any) => {
+            console.error(err);
+            reject(err);
+        });
+    });
+};
