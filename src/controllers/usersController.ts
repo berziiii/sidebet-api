@@ -151,7 +151,7 @@ export const updateUserInformation = (req: any, res: any) => {
         })
         .then((updateUser: any) => {
             ActivityController.createUserActivity({
-                user_id: updateUser.user_id,
+                user_id: credentials.user_id,
                 activity_text: "User updated Account Information"
             });
             res.status(200).json(updateUser[0]);

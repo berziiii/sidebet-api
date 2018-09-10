@@ -22,7 +22,7 @@ export const createActivity = (activity: any) => {
 export const getUserActivity = (userId: any) => {
     return new Promise((resolve, reject) => {
         knex("activity").where("owner_id", userId)
-        .returning(["timestame", "activity_text", "activity_id"])
+        .returning(["timestamp", "activity_text", "activity_id"])
         .orderBy("timestamp", "desc")
         .then((activities: any) => {
             resolve(activities);
