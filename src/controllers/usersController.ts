@@ -76,10 +76,15 @@ export const loginUser = (req: any, res: any) => {
     if (!_.isNil(credentials)) {
         UserHelpers.findUserByEmailOrUsername(credentials.email)
         .then((account: any) => {
-            if (!_.isNil(account)) {
-                return UserHelpers.checkUserPassword(credentials);
-            } else {
-                res.status(404).json("Account does not exist. Please create one.");
+            if (account.is_active)
+                if (!_.isNil(account)) {
+                    return UserHelpers.checkUserPassword(credentials);
+                } else {
+                    res.status(404).json("Account does not exist. Please create one.");
+                }
+            else {
+                res.status(422).json("Account is locked or not active. Please contact an Administrator");
+                throw new Error();
             }
         })
         .then((userPasswordMatch: boolean) => {
