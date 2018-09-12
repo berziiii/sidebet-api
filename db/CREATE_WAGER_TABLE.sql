@@ -1,5 +1,5 @@
 DROP TABLE public.wager CASCADE;
-DROP TABLE public.wager_option CASCADE;
+DROP TABLE public.option CASCADE;
 DROP TABLE public.bet CASCADE;
 
 CREATE TABLE public.wager (
