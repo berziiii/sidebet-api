@@ -26,15 +26,12 @@ export const checkIfUsersBetExists = (betData: any, credentials: any) => {
     });
 };
 
-export const checkUserOwnsBet = (user: any, credentials: any) => {
+export const getBetByOwner = (user: any, credentials: any) => {
     return new Promise((resolve, reject) => {
-        knex("bet").where("bet_id", credentials.bet_id)
+        knex("bet").where({"wager_id": credentials.wager_id, "owner_id": user.user_id})
         .returning(BET_RESPONSE_KEYS)
         .then((bet: any) => {
-            if (user.user_id === bet[0]["owner_id"]) {
-                resolve(true);
-            }
-            resolve(false);
+            resolve(bet);
         })
         .catch((err: any) => {
             console.error(err);
@@ -94,37 +91,41 @@ export const findUsersBetsByWagerID = (optionId: any) => {
             const PromiseChain: any = [];
             const formattedBets: any = [];
             _.each(bets, (bet) => {
-                PromiseChain.push(UserHelper.findUserByUserID(bet.owner_id));
+                if (!_.isNil(bet))
+                    PromiseChain.push(UserHelper.findUserByUserID(bet.owner_id));
             });
-            Promise.all(PromiseChain)
-            .then((users: any) => {
-                if (users.length > 0) {
-                    _.each(users, (user) => {
-                        const temp: any = {
-                            username: user.username,
-                            first_name: user.first_name,
-                            last_name: user.last_name,
-                            user_id: user.user_id
-                        };
-                        _.each(bets, (bet) => {
-                            if (bet.owner_id === user.user_id) {
-                                temp.bet_amount = bet.bet_amount;
-                                temp.option_id = bet.option_id;
-                                temp.wager_id = bet.wager_id;
-                                temp.bet_id = bet.bet_id;
-                            }
+            if (PromiseChain.length > 0)
+                Promise.all(PromiseChain)
+                .then((users: any) => {
+                    if (users.length > 0) {
+                        _.each(users, (user) => {
+                            const temp: any = {
+                                username: user.username,
+                                first_name: user.first_name,
+                                last_name: user.last_name,
+                                user_id: user.user_id
+                            };
+                            _.each(bets, (bet) => {
+                                if (bet.owner_id === user.user_id) {
+                                    temp.bet_amount = bet.bet_amount;
+                                    temp.option_id = bet.option_id;
+                                    temp.wager_id = bet.wager_id;
+                                    temp.bet_id = bet.bet_id;
+                                }
+                            });
+                            formattedBets.push(temp);
                         });
-                        formattedBets.push(temp);
-                    });
-                    resolve(formattedBets);
-                } else {
-                    resolve();
-                }
-            })
-            .catch((err) => { 
-                console.error(err);
-                reject(err);
-            });
+                        resolve(formattedBets);
+                    } else {
+                        resolve();
+                    }
+                })
+                .catch((err) => { 
+                    console.error(err);
+                    reject(err);
+                });
+            else
+                resolve();
         })
         .catch((err: any) => {
             console.error(err);

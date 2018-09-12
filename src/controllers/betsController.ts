@@ -20,13 +20,19 @@ export const enterBet = (req: any, res: any) => {
     .then((isValid: any) => {
         if (isValid) {
             if (AppHelpers.validateObjectKeys(betData, BetHelpers.PERMIT_BET_KEYS)) {
-                if (!BetHelpers.checkIfUsersBetExists(betData, credentials)) {
-                    betData.wager_id = credentials.wager_id;
-                    betData.bet_id = AppHelpers.uuidForID();
-                    return BetHelpers.insertBet(betData);
-                } else {
-                   return updateBet(betData, credentials);
-                }
+                return BetHelpers.checkIfUsersBetExists(betData, credentials)
+                .then((betExists: boolean) => {
+                    if (!betExists) {
+                        betData.wager_id = credentials.wager_id;
+                        betData.bet_id = AppHelpers.uuidForID();
+                        return BetHelpers.insertBet(betData);
+                    } else {
+                       return updateBet(betData, credentials);
+                    }
+                })
+                .catch((err) => {
+                    throw new Error(err);
+                });
             } else {
                 res.status(422).json("Invalid Bet Data");
             }
@@ -57,20 +63,16 @@ export const updateBet = (betData: any, credentials: any) => {
 export const deleteBet = (req: any, res: any) => {
     const credentials = {
         token: UserHelpers.getAccessToken(req),
-        bet_id: req.params.betId
+        wager_id: req.params.wagerId
     };
     UserHelpers.findUserByToken(credentials)
     .then((user: any) => {
-        return BetHelpers.checkUserOwnsBet(user, credentials);
+        return BetHelpers.getBetByOwner(user, credentials);
     })
-    .then((isOwner: any) => {
-        if (isOwner) {
-           return BetHelpers.deleteBet(credentials.bet_id);
-        } else {
-            res.status(403).json("Unauthorized or Invalid Token");
-        }
+    .then((bet: any) => {
+        return BetHelpers.deleteBet(bet[0]["bet_id"]);
     })
-    .then((createdBet: any) => {
+    .then(() => {
         res.status(200).json("Bet Successfully Deleted");
     })
     .catch((err: any) => {

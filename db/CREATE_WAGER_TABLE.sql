@@ -10,6 +10,7 @@ CREATE TABLE public.wager (
     wager_status VARCHAR(50) NOT NULL,
     share_type VARCHAR(50) NOT NULL,
     closes_at VARCHAR(50) NOT NULL,
+    expires_at VARCHAR(50) NOT NULL,
     created_at VARCHAR(50) NOT NULL,
     last_modified VARCHAR(50) NOT NULL,
     wager_title TEXT NOT NULL,
@@ -34,5 +35,5 @@ CREATE TABLE public.bet (
     owner_id VARCHAR(255) REFERENCES public.user(user_id) ON DELETE CASCADE,
     wager_id  VARCHAR(255) REFERENCES public.wager(wager_id) ON DELETE CASCADE,
     option_id VARCHAR(255) REFERENCES public.option(option_id) ON DELETE CASCADE,
-    bet_amount TEXT NOT NULL
+    bet_amount TEXT
 );

@@ -7,8 +7,8 @@ import * as BetHelper from "./betHelpers";
 
 const knex = _knex(KNEX_CONFIG);
 
-export const PERMIT_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "wager_title", "wager_description", "wager_prize_type", "wager_prize", "wager_buy_in", "last_modified"];
-export const RESPONSE_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "wager_title", "wager_description", "wager_prize_type", "wager_prize", "wager_buy_in", "last_modified"];
+export const PERMIT_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "expires_at", "wager_title", "wager_description", "wager_prize_type", "wager_prize", "wager_buy_in", "last_modified", "created_at"];
+export const RESPONSE_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "expires_at", "wager_title", "wager_description", "wager_prize_type", "wager_prize", "wager_buy_in", "last_modified", "created_at"];
 export const PERMIT_WAGER_OPTION_KEYS = ["owner_id", "wager_id", "option_text", "is_winner"];
 export const RESPONSE_WAGER_OPTION_KEYS = ["option_id", "owner_id", "wager_id", "option_text", "is_winner"];
 
@@ -17,7 +17,7 @@ export const validateNewWagerData = (wager: any) => {
         wager.wager_status = "Open";
         wager.wager_id = AppHelper.uuidForID();
         wager.created_at =  AppHelper.currentTime();
-        wager.last_modified = wager.created_at;
+        wager.last_modified = AppHelper.currentTime();
         return wager;
     }
     return "No Wager Data or Invalid Data";
@@ -213,7 +213,12 @@ export const findUsersWhoBetOnWager = (wager: any) => {
             });
             Promise.all(promiseChain)
             .then((res) => {
-                wager.bets = _.flattenDeep(res);
+                const temp: any = [];
+                _.each(_.flattenDeep(res), (a) => {
+                    if (!_.isNil(a))
+                        temp.push(a);
+                });
+                wager.bets = temp;
                 resolve(wager);
             })
             .catch((err) => {

@@ -24,7 +24,7 @@ export const getAllWagers = (req: any, res: any) => {
     })
     .catch((err) => {
         console.error(err);
-        res.status(500).json("Something went wrong. Unable to find Wager");
+        res.status(500).json("Something went wrong. Unable to find Wagera");
     });
 };
 
@@ -48,6 +48,21 @@ export const getWager = (req: any, res: any) => {
         return WagerHelpers.findUsersWhoBetOnWager(wager);
     })
     .then((wager: any) => {
+        return UserHelpers.findUserByUserID(wager.owner_id)
+                .then((user: any) => {
+                    const owner = {
+                        username: user.username,
+                        email: user.email,
+                        user_id: user.user_id
+                    };
+                    wager.owner = owner;
+                    return wager;
+                })
+                .catch((err: any) => {
+                    throw new Error();
+                });
+    })
+    .then((wager: any) => {
         if (!_.isNil(wager)) {
             res.status(200).json(wager);
         } else {
@@ -68,8 +83,9 @@ export const createWager = (req: any, res: any) => {
     const wagerData = req.body.wager || req.body;
     UserHelpers.findUserByToken(credentials)
     .then((user: any) => {
-        if (wagerData.owner_id === user.user_id) {
+        if (!_.isNil(user)) {
             if (AppHelpers.validateObjectKeys(wagerData, WagerHelpers.PERMIT_WAGER_KEYS)) {
+                wagerData.owner_id = user.user_id;
                 return WagerHelpers.validateNewWagerData(wagerData);
             }
             res.status(422).json("Invalid Wager Data");
