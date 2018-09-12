@@ -17,7 +17,7 @@ export const getAllWagers = (req: any, res: any) => {
         }
     })
     .then((wagers: any) => {
-        if (wagers.length > 0)
+        if (_.isArray(wagers))
             return WagerHelpers.findAllUsersForWagers(wagers);
         return wagers;
     })
