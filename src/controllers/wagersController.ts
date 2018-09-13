@@ -3,6 +3,7 @@ import * as _knex from "knex";
 import * as UserHelpers from "../helpers/userHelpers";
 import * as WagerHelpers from "../helpers/wagerHelpers";
 import * as AppHelpers from "../helpers/appHelpers";
+import * as ActivityController from "./activityController";
 
 export const getAllWagers = (req: any, res: any) => {
     const credentials: any = {
@@ -99,6 +100,10 @@ export const createWager = (req: any, res: any) => {
         return WagerHelpers.insertWagerData(validatedWager);
     })
     .then((createdWager: any) => {
+        ActivityController.createUserActivity({
+            user_id: createdWager[0]["owner_id"],
+            activity_text: `User Created a Wager with ID ${createdWager[0]["wager_id"]}`
+        });
         res.status(200).json(createdWager[0]);
     })
     .catch((err: any) => {
@@ -156,6 +161,10 @@ export const updateWagerDetails = (req: any, res: any) => {
         res.status(403).json("Unauthorized");
     })
     .then((response: any) => {
+        ActivityController.createUserActivity({
+            user_id: response[0]["owner_id"],
+            activity_text: `User Update Wager with ID ${response[0]["wager_id"]}`
+        });
         res.status(200).json(response[0]);
     })
     .catch((err: any) => {
@@ -169,8 +178,10 @@ export const deleteWager = (req: any, res: any) => {
         token: UserHelpers.getAccessToken(req),
         wager_id: req.params.wagerId
     };
+    let userData: any = undefined;
     UserHelpers.findUserByToken(credentials)
     .then((user: any) => {
+        userData = user;
         return WagerHelpers.validateUserOwnsWager(user, credentials);
     })
     .then((isOwner: boolean) => {
@@ -180,6 +191,10 @@ export const deleteWager = (req: any, res: any) => {
         res.status(403).json("Unauthorized");
     })
     .then(() => {
+        ActivityController.createUserActivity({
+            user_id: userData.user_id,
+            activity_text: `User Deleted Wager`
+        });
         res.status(200).json("Wager Successfully Deleted");
     })
     .catch((err: any) => {

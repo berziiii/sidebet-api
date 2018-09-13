@@ -3,12 +3,14 @@ import * as _knex from "knex";
 import * as UserHelpers from "../helpers/userHelpers";
 import * as BetHelpers from "../helpers/betHelpers";
 import * as AppHelpers from "../helpers/appHelpers";
+import * as ActivityController from "./activityController";
 
 export const enterBet = (req: any, res: any) => {
     const credentials = {
         token: UserHelpers.getAccessToken(req),
         wager_id: req.params.wagerId
     };
+    let activityType: any = undefined;
     const betData = req.body.bet || req.body;
     UserHelpers.findUserByToken(credentials)
     .then((user: any) => {
@@ -25,9 +27,11 @@ export const enterBet = (req: any, res: any) => {
                     if (!betExists) {
                         betData.wager_id = credentials.wager_id;
                         betData.bet_id = AppHelpers.uuidForID();
+                        activityType = "Create";
                         return BetHelpers.insertBet(betData);
                     } else {
-                       return updateBet(betData, credentials);
+                        activityType = "Update";
+                        return updateBet(betData, credentials);
                     }
                 })
                 .catch((err) => {
@@ -41,6 +45,16 @@ export const enterBet = (req: any, res: any) => {
         }
     })
     .then((createdBet: any) => {
+        if (activityType === "Create")
+            ActivityController.createUserActivity({
+                user_id: createdBet.owner_id,
+                activity_text: `User Created Bet on Option ${createdBet.option_id} on Wager ${createdBet.wager_id}`
+            });
+        else if (activityType === "Update")
+            ActivityController.createUserActivity({
+                user_id: createdBet.owner_id,
+                activity_text: `User Update Bet to Option ${createdBet.option_id} on Wager ${createdBet.wager_id}`
+            });
         res.status(200).json(createdBet);
     })
     .catch((err: any) => {
@@ -65,14 +79,20 @@ export const deleteBet = (req: any, res: any) => {
         token: UserHelpers.getAccessToken(req),
         wager_id: req.params.wagerId
     };
+    let userData: any = undefined;
     UserHelpers.findUserByToken(credentials)
     .then((user: any) => {
+        userData = user;
         return BetHelpers.getBetByOwner(user, credentials);
     })
     .then((bet: any) => {
         return BetHelpers.deleteBet(bet[0]["bet_id"]);
     })
     .then(() => {
+        ActivityController.createUserActivity({
+            user_id: userData.owner_id,
+            activity_text: `User Remove Bet on Wager ${credentials.wager_id}`
+        });
         res.status(200).json("Bet Successfully Deleted");
     })
     .catch((err: any) => {
