@@ -31,7 +31,7 @@ export const updateStatuses = (status: any) => {
 
     const PromiseChain: any = [];
     return new Promise((resolve, reject) => {
-        knex.select("*").from("wager")
+        knex("wager")
         .where("wager_status", status)
         .returning(RESPONSE_WAGER_KEYS)
         .then((response: any) => {
@@ -97,7 +97,7 @@ export const insertWagerData = (wager: any) => {
 
 export const getAllWagers = () => {
     return new Promise((resolve, reject) => {
-        knex.select("*").from("wager")
+        knex("wager")
         .then((wagers: any) => {
             if (!_.isNil(wagers) && wagers.length > 0) {
                 const promiseChain: any = [];
@@ -125,7 +125,7 @@ export const getAllWagers = () => {
 
 export const findWagerByID = (credentials: any) => {
     return new Promise((resolve, reject) => {
-        knex.select("*").from("wager").where("wager_id", credentials.wager_id)
+        knex("wager").where("wager_id", credentials.wager_id)
         .then((wager: any) => {
             if (wager.length > 0) {
                 resolve(wager[0]);
@@ -142,7 +142,7 @@ export const findWagerByID = (credentials: any) => {
 
 export const findWagerOptionsByWagerId = (wager: any) => {
     return new Promise((resolve, reject) => {
-        knex.select("*").from("option").where("wager_id", wager.wager_id)
+        knex("option").where("wager_id", wager.wager_id)
         .then((options: any) => {
             wager.options = options;
             resolve(wager);
