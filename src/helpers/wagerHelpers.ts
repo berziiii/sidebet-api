@@ -31,7 +31,7 @@ export const updateStatuses = (status: any) => {
 
     const PromiseChain: any = [];
     return new Promise((resolve, reject) => {
-        knex().select("*").from("wager")
+        knex.select("*").from("wager")
         .where("wager_status", status)
         .returning(RESPONSE_WAGER_KEYS)
         .then((response: any) => {
