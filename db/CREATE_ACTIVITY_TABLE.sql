@@ -1,4 +1,4 @@
-DROP TABLE public.activity;
+DROP TABLE public.activity CASCADE;
 
 CREATE TABLE public.activity (
     id SERIAL PRIMARY KEY,

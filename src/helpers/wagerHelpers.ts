@@ -2,15 +2,57 @@ import { KNEX_CONFIG } from "../config";
 import * as _ from "lodash";
 import * as _knex from "knex";
 import * as AppHelper from "./appHelpers";
-import * as UserHelper from "./userHelpers";
 import * as BetHelper from "./betHelpers";
+import * as moment from "moment";
 
 const knex = _knex(KNEX_CONFIG);
 
-export const PERMIT_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "expires_at", "wager_title", "wager_description", "wager_prize_type", "wager_prize", "wager_buy_in", "last_modified", "created_at"];
-export const RESPONSE_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "expires_at", "wager_title", "wager_description", "wager_prize_type", "wager_prize", "wager_buy_in", "last_modified", "created_at"];
-export const PERMIT_WAGER_OPTION_KEYS = ["owner_id", "wager_id", "option_text", "is_winner"];
-export const RESPONSE_WAGER_OPTION_KEYS = ["option_id", "owner_id", "wager_id", "option_text", "is_winner"];
+export const PERMIT_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "expires_at", "wager_title", "wager_description", "wager_prize_type", "wager_prize", "wager_buy_in", "winning_option", "last_modified", "created_at"];
+export const RESPONSE_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "expires_at", "wager_title", "wager_description", "wager_prize_type", "wager_prize", "wager_buy_in", "winning_option", "last_modified", "created_at"];
+export const PERMIT_WAGER_OPTION_KEYS = ["owner_id", "wager_id", "option_text"];
+export const RESPONSE_WAGER_OPTION_KEYS = ["option_id", "owner_id", "wager_id", "option_text"];
+
+const updateWagerStatus = (wager: any, nextStatus: string) => {
+    return new Promise((resolve, reject) => {
+        knex("wager")
+        .where("wager_id", wager.wager_id)
+        .update("wager_status", nextStatus)
+        .then((response: any) => {
+            resolve(response);
+        })
+        .catch((err: any) => {
+            console.error(err);
+            reject(err);
+        });
+    });
+};
+export const updateStatuses = (status: any) => {
+    const currentTime = moment().format();
+
+    const PromiseChain: any = [];
+    return new Promise((resolve, reject) => {
+        knex().select("*").from("wager")
+        .where("wager_status", status)
+        .returning(RESPONSE_WAGER_KEYS)
+        .then((response: any) => {
+            _.each(response, (wager: any) => {
+                if (status === "Open" && currentTime >= wager.closes_at)
+                    PromiseChain.push(updateWagerStatus(wager, "Closed"));
+                if (status === "Closed" && currentTime >= wager.expires_at)
+                    PromiseChain.push(updateWagerStatus(wager, "Pending Review"));
+                if (status === "Pending Review" && !_.isNil(wager.winning_option))
+                    PromiseChain.push(updateWagerStatus(wager, "Complete"));
+            });
+        })
+        .then(() => {
+            resolve();
+        })
+        .catch((err: any) => {
+            console.error(err);
+            reject(err);
+        });
+    });
+};
 
 export const validateNewWagerData = (wager: any) => {
     if (!_.isNil(wager)) {

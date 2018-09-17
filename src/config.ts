@@ -10,6 +10,7 @@ export const DBUSER = process.env.DBUSER;
 export const DBPASSWORD = process.env.DBPASSWORD;
 export const DATABASE = process.env.DATABASE;
 export const APP_SECRET_KEY = process.env.APP_SECRET_KEY;
+export const STATUSUPDATEINTERVAL = process.env.STATUSUPDATEINTERVAL;
 // export const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS || allowedOrigins;
 
 export const KNEX_CONFIG = {

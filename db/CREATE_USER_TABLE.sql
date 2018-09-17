@@ -1,4 +1,4 @@
-DROP TABLE public.user;
+DROP TABLE public.user CASCADE;
 
 CREATE TABLE public.user (
    id SERIAL PRIMARY KEY,

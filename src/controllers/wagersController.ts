@@ -4,6 +4,19 @@ import * as UserHelpers from "../helpers/userHelpers";
 import * as WagerHelpers from "../helpers/wagerHelpers";
 import * as AppHelpers from "../helpers/appHelpers";
 import * as ActivityController from "./activityController";
+import {STATUSUPDATEINTERVAL} from "../config";
+
+export const initiateStatusUpdates = () => {
+    const AllStatuses = ["Open", "Closed", "Pending Review"];
+    setInterval(() => {
+        _.each(AllStatuses, (status: string) => {
+            WagerHelpers.updateStatuses(status)
+            .then(() => {
+                return;
+            });
+        });
+    }, STATUSUPDATEINTERVAL);
+};
 
 export const getAllWagers = (req: any, res: any) => {
     const credentials: any = {

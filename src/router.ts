@@ -4,6 +4,7 @@ import * as BetsController from "./controllers/betsController";
 import * as AdminController from "./controllers/adminController";
 
 export const appRouter = (router: any)  => {
+  WagersController.initiateStatusUpdates();
   // ****************************** //
   // *********** USERS ************ //
   // ****************************** //
