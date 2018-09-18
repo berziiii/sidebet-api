@@ -19,7 +19,7 @@ export const updateStatuses = (status: any) => {
         if (status === "Open") {
             query = `UPDATE public.wager SET wager_status = 'In Progress' WHERE (closes_at <= '${currentTime}' AND wager_status = 'Open')`;
             knex.raw(query)
-            .then((res: any) => {
+            .then(() => {
                 resolve();
             })
             .catch((err: any) => {
@@ -27,10 +27,10 @@ export const updateStatuses = (status: any) => {
                 reject(err);
             });
         }
-        if (status === "Closed") {
+        if (status === "In Progress") {
             query = `UPDATE public.wager SET wager_status = 'Pending Review' WHERE (expires_at <= '${currentTime}' AND wager_status = 'In Progress')`;
             knex.raw(query)
-            .then((res: any) => {
+            .then(() => {
                 resolve();
             })
             .catch((err: any) => {
