@@ -7,7 +7,7 @@ import * as ActivityController from "./activityController";
 import {STATUSUPDATEINTERVAL} from "../config";
 
 export const initiateStatusUpdates = () => {
-    const AllStatuses = ["Open", "Closed", "Pending Review"];
+    const AllStatuses = ["Open", "In Progress"];
     setInterval(() => {
         _.each(AllStatuses, (status: string) => {
             WagerHelpers.updateStatuses(status)

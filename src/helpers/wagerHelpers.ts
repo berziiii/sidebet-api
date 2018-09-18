@@ -12,46 +12,32 @@ export const RESPONSE_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager
 export const PERMIT_WAGER_OPTION_KEYS = ["owner_id", "wager_id", "option_text"];
 export const RESPONSE_WAGER_OPTION_KEYS = ["option_id", "owner_id", "wager_id", "option_text"];
 
-const updateWagerStatus = (wager: any, nextStatus: string) => {
-    return new Promise((resolve, reject) => {
-        knex("wager")
-        .where("wager_id", wager.wager_id)
-        .update("wager_status", nextStatus)
-        .then((response: any) => {
-            resolve(response);
-        })
-        .catch((err: any) => {
-            console.error(err);
-            reject(err);
-        });
-    });
-};
 export const updateStatuses = (status: any) => {
     const currentTime = moment().format();
-
-    const PromiseChain: any = [];
     return new Promise((resolve, reject) => {
-        knex("wager")
-        .where("wager_status", status)
-        .returning(RESPONSE_WAGER_KEYS)
-        .then((response: any) => {
-            _.each(response, (wager: any) => {
-                if (status === "Open" && currentTime >= wager.closes_at)
-                    PromiseChain.push(updateWagerStatus(wager, "Closed"));
-                if (status === "Closed" && currentTime >= wager.expires_at)
-                    PromiseChain.push(updateWagerStatus(wager, "Pending Review"));
-                if (status === "Pending Review" && !_.isNil(wager.winning_option))
-                    PromiseChain.push(updateWagerStatus(wager, "Complete"));
+        let query; 
+        if (status === "Open") {
+            query = `UPDATE public.wager SET wager_status = 'In Progress' WHERE (closes_at <= '${currentTime}' AND wager_status = 'Open')`;
+            knex.raw(query)
+            .then((res: any) => {
+                resolve();
+            })
+            .catch((err: any) => {
+                console.error(err);
+                reject(err);
             });
-            return Promise.all(PromiseChain);
-        })
-        .then(() => {
-            resolve();
-        })
-        .catch((err: any) => {
-            console.error(err);
-            reject(err);
-        });
+        }
+        if (status === "Closed") {
+            query = `UPDATE public.wager SET wager_status = 'Pending Review' WHERE (expires_at <= '${currentTime}' AND wager_status = 'In Progress')`;
+            knex.raw(query)
+            .then((res: any) => {
+                resolve();
+            })
+            .catch((err: any) => {
+                console.error(err);
+                reject(err);
+            });
+        }
     });
 };
 
