@@ -18,7 +18,7 @@ CREATE TABLE public.wager (
     wager_prize_type VARCHAR(255) NOT NULL,
     wager_prize VARCHAR(255),
     wager_buy_in VARCHAR(255),
-    winning_option VARCHAR(255),
+    winning_option VARCHAR(255)
 );
 
 CREATE TABLE public.option (
@@ -26,7 +26,7 @@ CREATE TABLE public.option (
     option_id VARCHAR(255) NOT NULL UNIQUE,
     owner_id VARCHAR(255) REFERENCES public.user(user_id) ON DELETE CASCADE,
     wager_id VARCHAR(255) REFERENCES public.wager(wager_id) ON DELETE CASCADE,
-    option_text TEXT NOT NULL,
+    option_text TEXT NOT NULL
 );
 
 CREATE TABLE public.bet (

@@ -72,7 +72,7 @@ export const insertWagerData = (wager: any) => {
         knex("wager")
         .insert(wager)
         .returning(RESPONSE_WAGER_KEYS)
-        .then((response: any) => {
+        .then((response: any) => 
             resolve(response);
         })
         .catch((err: any) => {
@@ -85,7 +85,7 @@ export const insertWagerData = (wager: any) => {
 export const getAllWagers = () => {
     return new Promise((resolve, reject) => {
         knex("wager")
-        .then((wagers: any) => {
+        .then((wagers: any) => 
             if (!_.isNil(wagers) && wagers.length > 0) {
                 const promiseChain: any = [];
                 wagers.forEach((wager: any) => {
@@ -93,6 +93,7 @@ export const getAllWagers = () => {
                 });
                 Promise.all(promiseChain)
                 .then((res) => {
+
                     resolve(res);
                 })
                 .catch((err) => {
@@ -113,7 +114,7 @@ export const getAllWagers = () => {
 export const findWagerByID = (credentials: any) => {
     return new Promise((resolve, reject) => {
         knex("wager").where("wager_id", credentials.wager_id)
-        .then((wager: any) => {
+        .then((wager: any) => 
             if (wager.length > 0) {
                 resolve(wager[0]);
             } else {
@@ -130,7 +131,7 @@ export const findWagerByID = (credentials: any) => {
 export const findWagerOptionsByWagerId = (wager: any) => {
     return new Promise((resolve, reject) => {
         knex("option").where("wager_id", wager.wager_id)
-        .then((options: any) => {
+        .then((options: any) => 
             wager.options = options;
             resolve(wager);
         })
