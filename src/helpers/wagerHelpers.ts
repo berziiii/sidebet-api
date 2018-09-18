@@ -43,6 +43,7 @@ export const updateStatuses = (status: any) => {
                 if (status === "Pending Review" && !_.isNil(wager.winning_option))
                     PromiseChain.push(updateWagerStatus(wager, "Complete"));
             });
+            return Promise.all(PromiseChain);
         })
         .then(() => {
             resolve();
