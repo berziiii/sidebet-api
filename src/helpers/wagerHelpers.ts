@@ -85,6 +85,7 @@ export const insertWagerData = (wager: any) => {
 export const getAllWagers = () => {
     return new Promise((resolve, reject) => {
         knex("wager")
+        .orderBy("closes_at", "desc")
         .then((wagers: any) => {
             if (!_.isNil(wagers) && wagers.length > 0) {
                 const promiseChain: any = [];
