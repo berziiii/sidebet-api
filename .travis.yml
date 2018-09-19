@@ -1,0 +1,15 @@
+language: node_js
+sudo: false
+node_js:
+- 10.9.0
+branches:
+  only:
+  - master
+  - develop
+deploy:
+  provider: heroku
+  api_key:
+    secure: ${HEROKU_API_KEY}
+  app:
+    master: "sidebet-api"
+    develop: "sandbox-sidebet-api"
