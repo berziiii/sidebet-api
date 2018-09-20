@@ -4,19 +4,17 @@ import * as _knex from "knex";
 import * as UserHelpers from "../helpers/userHelpers";
 import * as AppHelpers from "../helpers/appHelpers";
 import * as ActivityController from "./activityController";
+import { resolve } from "dns";
 
 // USER ENDPOINTS
 
 export const checkIfUsernameExists = (req: any, res: any) => {
     UserHelpers.findUserByUsername(req.body.username)
     .then((validUsername: string) => {
-        if (validUsername)
-            res.status(200).json(validUsername);
         res.status(200).json(validUsername);
     })
     .catch((err: any) => {
         console.error(err);
-
     });
 };
 
@@ -38,29 +36,51 @@ export const validateUserToken = (req: any, res: any) => {
     });
 };
 
+export  const checkIfUserExists = (req: any, res: any) => {
+    const user = req.body.user || req.body;
+    if (user.app_secret_key === APP_SECRET_KEY) {
+        delete user.app_secret_key;
+        UserHelpers.checkIfUserExists(user.email)
+        .then((userExist: boolean) => {
+            res.status(200).json(userExist);
+        })
+        .catch((err: any) => {
+            console.error(err);
+            res.status(500).json("Something went wrong");
+        });
+    } else {
+        res.status(422).json("Application Secret Key not valid or missing. Please try again.");
+    }
+};
+
 export const createUser = (req: any, res: any) => {
     let user = req.body.user || req.body;
     if (user.app_secret_key === APP_SECRET_KEY) {
         delete user.app_secret_key;
         UserHelpers.checkIfUserExists(user.email)
         .then((userExist: boolean) => {
+            let error;
             if (!_.isNil(user) && !userExist && AppHelpers.validateObjectKeys(user, UserHelpers.PERMIT_USER_KEYS)) {
                 user = UserHelpers.formatUserAttributes(user);
                 return UserHelpers.insertUserData(user);
             } else if (!AppHelpers.validateObjectKeys(user, UserHelpers.PERMIT_USER_KEYS)) {
-                res.status(422).json("Invalid User Data");
+                return error = "Invalid User Data";
             } else if (_.isNil(user)) {
-                res.status(500).json("Please provide user information");
+                return error = "Please provide user information";
             } else {
-                res.status(422).json("User already exists");
+                return error = "User already exists";
             }
         })
         .then((createdUser: any) => {
-            ActivityController.createUserActivity({
-                user_id: createdUser.user_id,
-                activity_text: "User created account"
-            });
-            res.status(200).json(createdUser);
+            if (_.isObject(createdUser)) {
+                ActivityController.createUserActivity({
+                    user_id: createdUser.user_id,
+                    activity_text: "User created account"
+                });
+                res.status(200).json(createdUser);
+            } else {
+                res.status(422).json(createdUser);
+            }
         })
         .catch((err: any) => {
             console.error(err);
@@ -76,19 +96,17 @@ export const loginUser = (req: any, res: any) => {
     if (!_.isNil(credentials)) {
         UserHelpers.findUserByEmailOrUsername(credentials.email)
         .then((account: any) => {
-            if (account.is_active)
-                if (!_.isNil(account)) {
-                    return UserHelpers.checkUserPassword(credentials);
-                } else {
-                    res.status(404).json("Account does not exist. Please create one.");
-                }
-            else {
-                res.status(422).json("Account is locked or not active. Please contact an Administrator");
-                throw new Error();
+            let error;
+            if (!_.isNil(account) && account.is_active) {
+                return UserHelpers.checkUserPassword(credentials);
+            } else if (!_.isNil(account) && !account.is_active) {
+                return error = "Account is locked or not active. Please contact an Administrator";
+            } else {
+                return error = "Account does not exist. Please Sign Up!";
             }
         })
         .then((userPasswordMatch: boolean) => {
-            if (userPasswordMatch) {
+            if (userPasswordMatch === true) {
                 UserHelpers.findUserByEmailOrUsername(credentials.email)
                 .then((user: {}) => {
                     return UserHelpers.updateUserToken(user);
@@ -100,8 +118,10 @@ export const loginUser = (req: any, res: any) => {
                     console.error(err);
                     res.status(500).json("Something went wrong, unable to Sign In.");
                 });
-            } else {
+            } else if (userPasswordMatch === false) {
                 res.status(422).json("Username or Password does not match. Please try again.");
+            } else {
+                res.status(422).json(userPasswordMatch);
             }
         })
         .catch((err) => {
