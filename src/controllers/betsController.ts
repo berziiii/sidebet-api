@@ -2,6 +2,7 @@ import * as _ from "lodash";
 import * as _knex from "knex";
 import * as UserHelpers from "../helpers/userHelpers";
 import * as BetHelpers from "../helpers/betHelpers";
+import * as WagerHelper from "../helpers/wagerHelpers";
 import * as AppHelpers from "../helpers/appHelpers";
 import * as ActivityController from "./activityController";
 
@@ -99,5 +100,41 @@ export const deleteBet = (req: any, res: any) => {
         console.error(err);
         res.status(500).json(err);
     });
+};
 
+export const ownerDeleteBet = (req: any, res: any) => {
+    const credentials = {
+        token: UserHelpers.getAccessToken(req),
+        wager_id: req.params.wagerId,
+        bet_id: req.params.betId,
+    };
+    let userData: any = undefined;
+    let wagerData: any = undefined;
+    UserHelpers.findUserByToken(credentials)
+    .then((user: any) => {
+        userData = user;
+        return WagerHelper.findWagerByID(credentials);
+    })
+    .then((wager: any) => {
+        wagerData = wager;
+        if (userData.user_id === wager.owner_id)
+            return BetHelpers.deleteBet(credentials.bet_id);
+        else 
+            return "Not Owner";
+    })
+    .then(() => {
+        if (wagerData.owner_id === userData.user_id) {
+            ActivityController.createUserActivity({
+                user_id: userData.owner_id,
+                activity_text: `Owner ${userData.username} Removed Bet ${credentials.bet_id} on Wager ${credentials.wager_id}`
+            });
+            res.status(200).json("Bet Successfully Deleted");
+        } else {
+            res.status(422).json("Unauthorized to Remove User Bet");
+        }
+    })
+    .catch((err: any) => {
+        console.error(err);
+        res.status(500).json(err);
+    });
 };

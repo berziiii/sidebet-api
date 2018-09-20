@@ -52,6 +52,7 @@ export const appRouter = (router: any)  => {
   // router.put("/api/bets/:betId/update", BetsController.updateBet);
 
   router.delete("/api/wagers/:wagerId/bet/delete", BetsController.deleteBet);
+  router.delete("/api/wagers/:wagerId/bet/:betId/delete", BetsController.ownerDeleteBet);
 
   // ************************************* //
   // ************ ADMIN USER ************* // 
