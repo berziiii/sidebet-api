@@ -15,6 +15,7 @@ CREATE TABLE public.wager (
     last_modified VARCHAR(50) NOT NULL,
     wager_title TEXT NOT NULL,
     wager_description TEXT NOT NULL,
+    special_instruction TEXT,
     wager_prize_type VARCHAR(255) NOT NULL,
     wager_prize VARCHAR(255),
     wager_buy_in VARCHAR(255),

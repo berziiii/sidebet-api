@@ -7,8 +7,8 @@ import * as moment from "moment";
 
 const knex = _knex(KNEX_CONFIG);
 
-export const PERMIT_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "expires_at", "wager_title", "wager_description", "wager_prize_type", "wager_prize", "wager_buy_in", "winning_option", "last_modified", "created_at"];
-export const RESPONSE_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "expires_at", "wager_title", "wager_description", "wager_prize_type", "wager_prize", "wager_buy_in", "winning_option", "last_modified", "created_at"];
+export const PERMIT_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "expires_at", "wager_title", "wager_description", "special_instruction", "wager_prize_type", "wager_prize", "wager_buy_in", "winning_option", "last_modified", "created_at"];
+export const RESPONSE_WAGER_KEYS = ["owner_id", "wager_id", "wager_type", "wager_status", "share_type", "closes_at", "expires_at", "wager_title", "wager_description", "special_instruction", "wager_prize_type", "wager_prize", "wager_buy_in", "winning_option", "last_modified", "created_at"];
 export const PERMIT_WAGER_OPTION_KEYS = ["owner_id", "wager_id", "option_text"];
 export const RESPONSE_WAGER_OPTION_KEYS = ["option_id", "owner_id", "wager_id", "option_text"];
 
