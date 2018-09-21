@@ -126,7 +126,7 @@ export const findUserByUsername = (username: any) => {
 export const updateUserToken = (user: any) => {
     return new Promise((resolve, reject) => {
         const newToken = AppHelper.uuidForToken();
-        const newLogin = moment().format();
+        const newLogin = moment.utc().format();
         knex("user").where("email", `${user.email}`)
         .update({"token": newToken, "last_login": newLogin})
         .returning(USER_RESPONSE_KEYS)

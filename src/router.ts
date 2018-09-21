@@ -1,10 +1,12 @@
 import * as UsersController from "./controllers/usersController";
 import * as WagersController from "./controllers/wagersController";
+import * as WagersHelpers from "./helpers/wagerHelpers";
 import * as BetsController from "./controllers/betsController";
 import * as AdminController from "./controllers/adminController";
 
 export const appRouter = (router: any)  => {
   WagersController.initiateStatusUpdates();
+  WagersHelpers.resetTimes();
   // ****************************** //
   // *********** USERS ************ //
   // ****************************** //

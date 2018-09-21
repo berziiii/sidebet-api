@@ -6,7 +6,7 @@ export const createUserActivity = (activity: any) => {
     const data = {
         owner_id: activity.user_id,
         activity_text: activity.activity_text,
-        timestamp: moment().format()
+        timestamp: moment.utc().format()
     };
     ActivityHelpers.createActivity(data)
     .catch((err: any) => {

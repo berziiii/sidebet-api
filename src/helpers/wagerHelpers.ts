@@ -13,8 +13,7 @@ export const PERMIT_WAGER_OPTION_KEYS = ["owner_id", "wager_id", "option_text"];
 export const RESPONSE_WAGER_OPTION_KEYS = ["option_id", "owner_id", "wager_id", "option_text"];
 
 export const updateStatuses = (status: any) => {
-    const currentTime = moment().format();
-    console.log(currentTime);
+    const currentTime = moment.utc().format();
     return new Promise((resolve, reject) => {
         let query; 
         if (status === "Open") {
@@ -39,6 +38,47 @@ export const updateStatuses = (status: any) => {
                 reject(err);
             });
         }
+    });
+};
+
+export const resetTimes = () => {
+    const wagers: any = [];
+
+    return new Promise((resolve, reject) => {
+        knex.select("*").from("wager")
+        .then((allWagers: any) => {
+            allWagers.forEach((wager: any) => {
+                wagers.push(wager);
+            });
+            return;
+        })
+        .then(() => {
+            wagers.forEach((wager: any) => {
+                const closes_at = moment.utc(wager.closes_at).format();
+                const expires_at = moment.utc(wager.expires_at).format();
+                const created_at = moment.utc(wager.created_at).format();
+                const last_modified = moment.utc(wager.last_modified).format();
+
+                knex("wager")
+                .update({
+                    "closes_at": closes_at,
+                    "expires_at": expires_at,
+                    "created_at": created_at,
+                    "last_modified": last_modified
+                })
+                .where("wager_id", wager.wager_id)
+                .then((res) => {
+                    return;
+                });
+            });
+        })
+        .then(() => {
+            resolve();
+        })
+        .catch((err: any) => {
+            console.error(err);
+            reject(err);
+        });
     });
 };
 

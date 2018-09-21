@@ -12,7 +12,7 @@ export const uuidForToken = () => {
 };
 
 export const currentTime = () => {
-    return moment().format();
+    return moment.utc().format();
 };
 
 export const validateObjectKeys = (obj: any, base: any) => {

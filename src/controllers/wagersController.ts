@@ -16,6 +16,7 @@ export const initiateStatusUpdates = () => {
             });
         });
     }, STATUSUPDATEINTERVAL);
+    
 };
 
 export const getAllWagers = (req: any, res: any) => {
