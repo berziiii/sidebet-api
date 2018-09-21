@@ -41,47 +41,6 @@ export const updateStatuses = (status: any) => {
     });
 };
 
-export const resetTimes = () => {
-    const wagers: any = [];
-
-    return new Promise((resolve, reject) => {
-        knex.select("*").from("wager")
-        .then((allWagers: any) => {
-            allWagers.forEach((wager: any) => {
-                wagers.push(wager);
-            });
-            return;
-        })
-        .then(() => {
-            wagers.forEach((wager: any) => {
-                const closes_at = moment.utc(wager.closes_at).format();
-                const expires_at = moment.utc(wager.expires_at).format();
-                const created_at = moment.utc(wager.created_at).format();
-                const last_modified = moment.utc(wager.last_modified).format();
-
-                knex("wager")
-                .update({
-                    "closes_at": closes_at,
-                    "expires_at": expires_at,
-                    "created_at": created_at,
-                    "last_modified": last_modified
-                })
-                .where("wager_id", wager.wager_id)
-                .then((res) => {
-                    return;
-                });
-            });
-        })
-        .then(() => {
-            resolve();
-        })
-        .catch((err: any) => {
-            console.error(err);
-            reject(err);
-        });
-    });
-};
-
 export const validateNewWagerData = (wager: any) => {
     if (!_.isNil(wager)) {
         wager.wager_status = "Open";

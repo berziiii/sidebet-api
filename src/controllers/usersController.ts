@@ -4,7 +4,6 @@ import * as _knex from "knex";
 import * as UserHelpers from "../helpers/userHelpers";
 import * as AppHelpers from "../helpers/appHelpers";
 import * as ActivityController from "./activityController";
-import { resolve } from "dns";
 
 // USER ENDPOINTS
 

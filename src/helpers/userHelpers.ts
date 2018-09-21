@@ -15,6 +15,43 @@ export const getAccessToken = (req: any) => {
     return req.headers.authorization.split("token=")[1];
 };
 
+export const resetTimes = () => {
+    const users: any = [];
+
+    return new Promise((resolve, reject) => {
+        knex.select("*").from("user")
+        .then((allUsers: any) => {
+            allUsers.forEach((user: any) => {
+                users.push(user);
+            });
+            return;
+        })
+        .then(() => {
+            users.forEach((user: any) => {
+                const created_at = moment.utc(user.created_at).format();
+                const last_login = moment.utc(user.last_login).format();
+
+                knex("user")
+                .update({
+                    "created_at": created_at,
+                    "last_login": last_login
+                })
+                .where("user_id", user.user_id)
+                .then((res) => {
+                    return;
+                });
+            });
+        })
+        .then(() => {
+            resolve();
+        })
+        .catch((err: any) => {
+            console.error(err);
+            reject(err);
+        });
+    });
+};
+
 export const isUserAdmin = (credentials: any) => {
     return new Promise((resolve, reject) => {
         knex("user").where("token", credentials.token)
