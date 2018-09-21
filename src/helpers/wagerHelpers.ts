@@ -14,6 +14,7 @@ export const RESPONSE_WAGER_OPTION_KEYS = ["option_id", "owner_id", "wager_id", 
 
 export const updateStatuses = (status: any) => {
     const currentTime = moment().format();
+    console.log(currentTime);
     return new Promise((resolve, reject) => {
         let query; 
         if (status === "Open") {
