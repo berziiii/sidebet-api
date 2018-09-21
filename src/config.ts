@@ -22,6 +22,6 @@ export const KNEX_CONFIG = {
         password: DBPASSWORD,
         database: DATABASE
     },
-    pool: { min: 0, max: 18 },
+    pool: { min: 0, max: 5 },
     acquireConnectionTimeout: 240000
 };
